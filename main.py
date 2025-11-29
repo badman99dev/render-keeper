@@ -6,7 +6,8 @@ urls = [
     "https://mantraaibot-1.onrender.com/",
     "https://movie-in-db.onrender.com",
     "https://repair-old-data.onrender.com",
-    "https://db-cloning.onrender.com"
+    "https://db-cloning.onrender.com",
+    "https://movie-in-db-1.onrender.com"
 ]
 
 print("Starting keep-alive process...")
