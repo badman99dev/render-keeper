@@ -1,23 +1,39 @@
-import requests
-import time
+name: Ultimate Render Reviver & Auto-Active
 
-# Yahan apni saari websites ke link daal do
-urls = [
-    "https://mantraaibot-1.onrender.com/",
-    "https://movie-in-db.onrender.com",
-    "https://repair-old-data.onrender.com",
-    "https://db-cloning.onrender.com",
-    "https://movie-in-db-1.onrender.com"
-]
+on:
+  schedule:
+    - cron: '*/7 * * * *'  # Har 7 min mein ping karega
+  workflow_dispatch: 
 
-print("Starting keep-alive process...")
+jobs:
+  ping_and_push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
 
-for url in urls:
-    try:
-        # Ye wahi kaam karega jo browser karta hai
-        response = requests.get(url)
-        print(f"Pinged {url} : Status Code {response.status_code}")
-    except Exception as e:
-        print(f"Error pinging {url}: {e}")
+      - name: Wake up Render Services
+        run: |
+          urls=(
+            "https://git-workflow-g1ws.onrender.com"
+            "https://mantraaibot-1.onrender.com/"
+            "https://movie-in-db.onrender.com"
+            "https://repair-old-data.onrender.com"
+            "https://db-cloning.onrender.com"
+            "https://movie-in-db-1.onrender.com"
+          )
+          for url in "${urls[@]}"; do
+            echo "Pinging $url..."
+            curl -s -I "$url" | grep "HTTP/" || echo "Failed: $url"
+          done
 
-print("All done!")
+      - name: Auto-Keep-Active (Every 15 Days)
+        # Ye step sirf mahine ki 1 aur 15 tarikh ko chalega
+        if: github.event_name == 'schedule' && (github.event.schedule == '0 0 1 * *' || github.event.schedule == '0 0 15 * *')
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          echo "Last Active: $(date)" > last_seen.txt
+          git add last_seen.txt
+          git commit -m "Keep-alive: Periodic activity to prevent workflow suspension"
+          git push
