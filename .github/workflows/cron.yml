@@ -2,7 +2,7 @@ name: Ultimate Render Reviver & Auto-Active
 
 on:
   schedule:
-    - cron: '*/7 * * * *'  # Har 7 min mein ping karega
+    - cron: '*/3 * * * *'  # Har 7 min mein ping karega
   workflow_dispatch: 
 
 jobs:
