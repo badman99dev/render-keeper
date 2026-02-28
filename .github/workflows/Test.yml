@@ -1,0 +1,48 @@
+name: Filmyzilla Debug Test 📳
+
+on:
+  workflow_dispatch: # 🔘 बटन दबाकर टेस्ट करो
+
+jobs:
+  check-connection:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 🌐 Deep Connection Scan
+      run: |
+        python3 -c "
+        import requests
+        from bs4 import BeautifulSoup
+
+        # एकदम असली दिखने वाला User-Agent
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
+        test_url = 'https://www.filmyzilla32.com/category/hollywood-movies-in-hindi-dubbed.html'
+
+        print(f'🚀 INITIATING TEST ON: {test_url}')
+        try:
+            resp = requests.get(test_url, headers=headers, timeout=30)
+            print(f'📡 HTTP STATUS CODE: {resp.status_code}')
+            print(f'📊 CONTENT LENGTH: {len(resp.text)} bytes')
+
+            if resp.status_code == 200:
+                soup = BeautifulSoup(resp.text, 'html.parser')
+                # चेक करो कि क्या मूवी लिंक्स मिल रहे हैं?
+                links = soup.select('div.touch a')
+                print(f'🔗 LINKS FOUND IN div.touch: {len(links)}')
+                
+                for a in links[:10]: # पहले 10 लिंक दिखाओ
+                    print(f'  - Found Link: {a.get(\"href\")} | Text: {a.get_text()}')
+
+                if len(resp.text) < 1000:
+                    print('⚠️ WARNING: Content is suspiciously short! Possible bot challenge.')
+                
+                if 'Cloudflare' in resp.text or 'Checking your browser' in resp.text:
+                    print('🛑 CLOUDFLARE DETECTED! GitHub is blocked by a bot challenge.')
+            
+            elif resp.status_code == 403:
+                print('🚫 ACCESS FORBIDDEN: Filmyzilla has blocked GitHub IP ranges.')
+            else:
+                print(f'❌ UNKNOWN ERROR: Site returned {resp.status_code}')
+
+        except Exception as e:
+            print(f'🚨 CRASHED: {e}')
+        "
