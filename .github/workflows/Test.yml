@@ -1,46 +1,49 @@
-name: Filmyzilla Evidence Collector 📸
+name: Cloudflare Bypass Test 🥷
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
-  capture-evidence:
+  bypass-test:
     runs-on: ubuntu-latest
     steps:
-    - name: 📂 Checkout Repo
-      uses: actions/checkout@v4
+    - name: 📦 Install Ninja Tools
+      run: pip install cloudscraper beautifulsoup4
 
-    - name: 🐍 Python Setup
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
-
-    - name: 📦 Install Requests
-      run: pip install requests
-
-    - name: 📸 Capture Block Page
+    - name: 🌐 Surgical Strike on Filmyzilla
       run: |
         python3 -c "
-        import requests
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
-        url = 'https://www.filmyzilla32.com/'
-        
-        print(f'🚀 Attempting to breach: {url}')
-        resp = requests.get(url, headers=headers, timeout=20)
-        
-        print(f'📡 Status: {resp.status_code}')
-        
-        # Save the evidence
-        with open('blocked_page.html', 'w', encoding='utf-8') as f:
-            f.write(resp.text)
-        
-        print('✅ Evidence saved to blocked_page.html')
-        print('--- PREVIEW OF CONTENT ---')
-        print(resp.text[:1000]) # Pehla 1000 char logs me bhi dikhega
-        "
+        import cloudscraper
+        from bs4 import BeautifulSoup
 
-    - name: 📤 Upload Evidence File
-      uses: actions/upload-artifact@v4
-      with:
-        name: Filmyzilla-Block-Page
-        path: blocked_page.html
+        # Cloudscraper khud headers handle kar leta hai
+        scraper = cloudscraper.create_scraper(
+            browser={
+                'browser': 'chrome',
+                'platform': 'windows',
+                'desktop': True
+            }
+        )
+
+        url = 'https://www.filmyzilla32.com/category/hollywood-movies-in-hindi-dubbed.html'
+        print(f'🚀 INITIATING NINJA ATTACK ON: {url}')
+
+        try:
+            resp = scraper.get(url, timeout=30)
+            print(f'📡 STATUS: {resp.status_code}')
+            
+            if resp.status_code == 200:
+                soup = BeautifulSoup(resp.text, 'html.parser')
+                links = soup.select('div.touch a')
+                print(f'✅ BINGO! Found {len(links)} links using Ninja Scraper!')
+                for a in links[:5]:
+                    print(f'  - {a.get_text()}')
+            else:
+                print(f'❌ STILL BLOCKED. Status: {resp.status_code}')
+                # Agar blocked hai to check karo text me kya hai
+                if 'Cloudflare' in resp.text:
+                    print('⚠️ Cloudflare is too strong for simple cloudscraper.')
+
+        except Exception as e:
+            print(f'🚨 CRASHED: {e}')
+        "
