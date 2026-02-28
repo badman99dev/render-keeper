@@ -1,49 +1,79 @@
-name: Cloudflare Bypass Test 🥷
+name: Proxy War - Rotating Attack 🛰️⚔️
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # 🔘 बटन दबाओ, जंग शुरू करो!
 
 jobs:
-  bypass-test:
+  proxy-surgical-strike:
     runs-on: ubuntu-latest
     steps:
-    - name: 📦 Install Ninja Tools
-      run: pip install cloudscraper beautifulsoup4
+    - name: 📂 Checkout Repo
+      uses: actions/checkout@v4
 
-    - name: 🌐 Surgical Strike on Filmyzilla
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: 📦 Install War Tools
+      run: pip install requests beautifulsoup4
+
+    - name: 🚀 Executing Proxy Rotation Attack
       run: |
         python3 -c "
-        import cloudscraper
+        import requests
         from bs4 import BeautifulSoup
+        import random
 
-        # Cloudscraper khud headers handle kar leta hai
-        scraper = cloudscraper.create_scraper(
-            browser={
-                'browser': 'chrome',
-                'platform': 'windows',
-                'desktop': True
+        def get_fresh_proxies():
+            log('🌐 Fetching fresh proxy list from the deep web...')
+            # Free Proxy API se list uthao
+            url = 'https://api.proxyscrape.com/v2/?request=displayproxies&protocol=http&timeout=10000&country=all&ssl=all&anonymity=all'
+            try:
+                resp = requests.get(url)
+                return resp.text.strip().split('\r\n')
+            except:
+                return []
+
+        def log(msg):
+            print(f'🤖 [PROXY-BOT] | {msg}', flush=True)
+
+        target_url = 'https://www.filmyzilla32.com/category/hollywood-movies-in-hindi-dubbed.html'
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
+        
+        proxies_list = get_fresh_proxies()
+        log(f'🎯 Found {len(proxies_list)} potential proxies. Starting the assault...')
+
+        success = False
+        # Randomly shuffle takki har baar naya try ho
+        random.shuffle(proxies_list)
+
+        for proxy_addr in proxies_list[:30]: # Pehle 30 try karo
+            proxy = {
+                'http': f'http://{proxy_addr}',
+                'https': f'http://{proxy_addr}'
             }
-        )
-
-        url = 'https://www.filmyzilla32.com/category/hollywood-movies-in-hindi-dubbed.html'
-        print(f'🚀 INITIATING NINJA ATTACK ON: {url}')
-
-        try:
-            resp = scraper.get(url, timeout=30)
-            print(f'📡 STATUS: {resp.status_code}')
             
-            if resp.status_code == 200:
-                soup = BeautifulSoup(resp.text, 'html.parser')
-                links = soup.select('div.touch a')
-                print(f'✅ BINGO! Found {len(links)} links using Ninja Scraper!')
-                for a in links[:5]:
-                    print(f'  - {a.get_text()}')
-            else:
-                print(f'❌ STILL BLOCKED. Status: {resp.status_code}')
-                # Agar blocked hai to check karo text me kya hai
-                if 'Cloudflare' in resp.text:
-                    print('⚠️ Cloudflare is too strong for simple cloudscraper.')
+            log(f'🛡️ Testing Proxy: {proxy_addr}')
+            try:
+                # 20 second ka timeout takki slow proxy pe script na fase
+                resp = requests.get(target_url, headers=headers, proxies=proxy, timeout=15)
+                
+                if resp.status_code == 200 and 'div' in resp.text:
+                    log(f'✅ BOOM! MISSION SUCCESS! Proxy {proxy_addr} breached the wall!')
+                    soup = BeautifulSoup(resp.text, 'html.parser')
+                    links = soup.select('div.touch a')
+                    log(f'🔗 Found {len(links)} links inside Filmyzilla!')
+                    for a in links[:5]:
+                        log(f'  - Movie Link: {a.get(\"href\")}')
+                    success = True
+                    break
+                else:
+                    log(f'❌ Failed (Status: {resp.status_code}). Trying next...')
+            
+            except Exception as e:
+                log(f'⚠️ Proxy dead or timed out.')
 
-        except Exception as e:
-            print(f'🚨 CRASHED: {e}')
+        if not success:
+            log('🚨 MISSION FAILED: All proxies were blocked or dead. Cloudflare is high as f*** today! 😂')
         "
