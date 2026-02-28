@@ -1,48 +1,70 @@
-name: Filmyzilla Debug Test 📳
+name: Filmyzilla Connection Test 📳
 
 on:
-  workflow_dispatch: # 🔘 बटन दबाकर टेस्ट करो
+  workflow_dispatch: # 🔘 बटन दबाओ और सच जानो
 
 jobs:
-  check-connection:
+  debug-connection:
     runs-on: ubuntu-latest
     steps:
-    - name: 🌐 Deep Connection Scan
+    - name: 📂 Checkout
+      uses: actions/checkout@v4
+
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: 📦 Install Dependencies
+      run: pip install requests beautifulsoup4
+
+    - name: 🌐 Deep Scan Connection
       run: |
         python3 -c "
         import requests
         from bs4 import BeautifulSoup
 
-        # एकदम असली दिखने वाला User-Agent
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'}
-        test_url = 'https://www.filmyzilla32.com/category/hollywood-movies-in-hindi-dubbed.html'
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8'
+        }
+        
+        # Test URLs (Main and Category)
+        urls = [
+            'https://www.filmyzilla32.com/',
+            'https://www.filmyzilla32.com/category/hollywood-movies-in-hindi-dubbed.html'
+        ]
 
-        print(f'🚀 INITIATING TEST ON: {test_url}')
-        try:
-            resp = requests.get(test_url, headers=headers, timeout=30)
-            print(f'📡 HTTP STATUS CODE: {resp.status_code}')
-            print(f'📊 CONTENT LENGTH: {len(resp.text)} bytes')
+        for url in urls:
+            print(f'\n🚀 TESTING URL: {url}')
+            try:
+                resp = requests.get(url, headers=headers, timeout=20)
+                print(f'📡 STATUS CODE: {resp.status_code}')
+                print(f'📊 PAGE SIZE: {len(resp.text)} bytes')
 
-            if resp.status_code == 200:
-                soup = BeautifulSoup(resp.text, 'html.parser')
-                # चेक करो कि क्या मूवी लिंक्स मिल रहे हैं?
-                links = soup.select('div.touch a')
-                print(f'🔗 LINKS FOUND IN div.touch: {len(links)}')
-                
-                for a in links[:10]: # पहले 10 लिंक दिखाओ
-                    print(f'  - Found Link: {a.get(\"href\")} | Text: {a.get_text()}')
+                if resp.status_code == 200:
+                    soup = BeautifulSoup(resp.text, 'html.parser')
+                    
+                    # 1. Check for Movies/Categories
+                    links = soup.select('div.touch a')
+                    print(f'🔗 LINKS FOUND (div.touch a): {len(links)}')
+                    
+                    # 2. Check for Cloudflare / Protection
+                    if 'Cloudflare' in resp.text or 'Checking your browser' in resp.text:
+                        print('🛑 ALERT: Cloudflare Protection is blocking the bot!')
+                    elif len(links) == 0:
+                        print('⚠️ WARNING: Page loaded but NO LINKS found. Selector might be wrong or site layout changed.')
+                        print('--- PAGE PREVIEW (First 500 chars) ---')
+                        print(resp.text[:500])
+                    else:
+                        print(f'✅ SUCCESS: Found {len(links)} links. Sample: {links[0].get(\"href\")}')
 
-                if len(resp.text) < 1000:
-                    print('⚠️ WARNING: Content is suspiciously short! Possible bot challenge.')
-                
-                if 'Cloudflare' in resp.text or 'Checking your browser' in resp.text:
-                    print('🛑 CLOUDFLARE DETECTED! GitHub is blocked by a bot challenge.')
-            
-            elif resp.status_code == 403:
-                print('🚫 ACCESS FORBIDDEN: Filmyzilla has blocked GitHub IP ranges.')
-            else:
-                print(f'❌ UNKNOWN ERROR: Site returned {resp.status_code}')
+                elif resp.status_code == 403:
+                    print('🚫 FORBIDDEN: GitHub IP is explicitly blocked!')
+                else:
+                    print(f'❌ FAILED: Received code {resp.status_code}')
 
-        except Exception as e:
-            print(f'🚨 CRASHED: {e}')
+            except Exception as e:
+                print(f'🚨 CRASHED: {e}')
         "
